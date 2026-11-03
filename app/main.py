@@ -12,7 +12,7 @@ from fastapi.responses import Response
 from PIL import Image as PILImage
 from PIL import UnidentifiedImageError
 
-from .enhance import METHODS, enhance
+from .enhance import METHODS, ModelSetupError, enhance
 
 MAX_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", 10 * 1024 * 1024))
 MIN_SIDE = 16
@@ -85,6 +85,8 @@ def enhance_image(file: Annotated[UploadFile, File()], method: Annotated[str, Fo
     try:
         result = enhance(image, method)
         ok, buffer = cv2.imencode(".png", result, [cv2.IMWRITE_PNG_COMPRESSION, 3])
+    except ModelSetupError as exc:
+        raise HTTPException(503, str(exc)) from exc
     except cv2.error:
         raise HTTPException(500, "Image processing failed.") from None
     if not ok:

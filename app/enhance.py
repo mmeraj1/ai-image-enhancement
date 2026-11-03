@@ -6,6 +6,8 @@ from typing import Callable
 import cv2
 import numpy as np
 
+from .gan import ModelSetupError, colorize, deblur
+
 Image = np.ndarray
 
 
@@ -44,6 +46,8 @@ METHODS: dict[str, Callable[[Image], Image]] = {
     "clahe": clahe,
     "gamma": gamma,
     "sharpen": sharpen,
+    "deblur": deblur,
+    "colorize": colorize,
 }
 
 

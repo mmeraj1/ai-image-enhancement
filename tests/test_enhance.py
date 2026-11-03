@@ -9,9 +9,9 @@ def dark_image() -> np.ndarray:
     return rng.integers(0, 60, (64, 80, 3), dtype=np.uint8)
 
 
-def test_all_methods_preserve_shape_and_dtype():
+def test_classic_methods_preserve_shape_and_dtype():
     img = dark_image()
-    for name in METHODS:
+    for name in ("auto", "clahe", "gamma", "sharpen"):
         out = enhance(img, name)
         assert out.shape == img.shape and out.dtype == np.uint8
 

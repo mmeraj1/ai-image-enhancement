@@ -1,0 +1,14 @@
+# Optional local inference dependencies for DeblurGAN-v2 and DeOldify.
+tensorflow>=2.16,<2.21
+torch==1.13.1
+torchvision==0.14.1
+numpy>=1.26,<2
+Pillow>=9.3,<11
+beautifulsoup4
+bottleneck
+fastprogress>=0.2.1
+matplotlib
+numexpr
+pandas
+requests>=2.31
+scipy

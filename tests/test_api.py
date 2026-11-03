@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main
-from app.enhance import METHODS
+from app.enhance import METHODS, ModelSetupError
 
 client = TestClient(main.app)
 
@@ -28,7 +28,7 @@ def test_health_and_methods():
     assert client.get("/methods").json()["methods"] == list(METHODS)
 
 
-@pytest.mark.parametrize("method", list(METHODS))
+@pytest.mark.parametrize("method", ("auto", "clahe", "gamma", "sharpen"))
 def test_enhance_each_method_returns_png_of_same_size(method):
     r = post(encode(), method)
     assert r.status_code == 200
@@ -36,6 +36,16 @@ def test_enhance_each_method_returns_png_of_same_size(method):
     assert r.headers["x-enhancement-method"] == method
     out = cv2.imdecode(np.frombuffer(r.content, np.uint8), cv2.IMREAD_COLOR)
     assert out.shape == (48, 64, 3)
+
+
+def test_gan_model_setup_error_is_reported_as_service_unavailable(monkeypatch):
+    def missing_model(image, method):
+        raise ModelSetupError("GAN weights are not installed.")
+
+    monkeypatch.setattr(main, "enhance", missing_model)
+    r = post(encode(), "deblur")
+    assert r.status_code == 503
+    assert r.json()["detail"] == "GAN weights are not installed."
 
 
 def test_jpeg_and_webp_accepted():

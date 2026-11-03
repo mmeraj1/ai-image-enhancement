@@ -13,6 +13,7 @@ from PIL import Image as PILImage
 from PIL import UnidentifiedImageError
 
 from .enhance import METHODS, ModelSetupError, enhance
+from .gan import gan_availability, preload
 
 MAX_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", 10 * 1024 * 1024))
 MIN_SIDE = 16
@@ -25,6 +26,12 @@ DEFAULT_ORIGINS = ["https://mmeraj1.github.io"]
 origins = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", ",".join(DEFAULT_ORIGINS)).split(",") if o.strip()]
 
 app = FastAPI(title="AI Image Enhancement", version="1.0.0")
+
+
+@app.on_event("startup")
+def _warm_up() -> None:
+    if os.getenv("PRELOAD_DEBLUR") == "1":
+        preload()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -36,13 +43,14 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok"}
+def health() -> dict[str, object]:
+    return {"status": "ok", "models": gan_availability()}
 
 
 @app.get("/methods")
 def methods() -> dict[str, list[str]]:
-    return {"methods": list(METHODS)}
+    available = gan_availability()
+    return {"methods": [name for name in METHODS if available.get(name, True)]}
 
 
 def _read_limited(upload: UploadFile) -> bytes:

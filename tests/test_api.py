@@ -24,8 +24,12 @@ def post(data: bytes, method="auto", content_type="image/png", name="x.png"):
 
 
 def test_health_and_methods():
-    assert client.get("/health").json() == {"status": "ok"}
-    assert client.get("/methods").json()["methods"] == list(METHODS)
+    health = client.get("/health").json()
+    assert health["status"] == "ok"
+    assert set(health["models"]) == {"deblur", "colorize"}
+    available = main.gan_availability()
+    expected = [name for name in METHODS if available.get(name, True)]
+    assert client.get("/methods").json()["methods"] == expected
 
 
 @pytest.mark.parametrize("method", ("auto", "clahe", "gamma", "sharpen"))

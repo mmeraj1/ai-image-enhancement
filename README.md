@@ -1,3 +1,13 @@
+---
+title: AI Image Enhancement
+emoji: 🖼️
+colorFrom: indigo
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # AI Image Enhancement
 
 FastAPI image enhancement service used by the interactive demo in the
@@ -82,3 +92,14 @@ docker build -t ai-image-enhancement . && docker run -p 7860:7860 ai-image-enhan
 The image works on any container host (Hugging Face Spaces Docker SDK, Render, Fly.io, Cloud Run).
 The default image includes only the lightweight OpenCV methods. To deploy GAN inference,
 install the optional dependencies and weights on a host with enough memory and storage.
+
+## Hosting on Hugging Face Spaces (Docker)
+The `Dockerfile` builds a CPU image (Python 3.11, `tensorflow-cpu`) that serves **DeblurGAN-v2** only:
+the 46 MB weights are downloaded and SHA-256 verified at build time, so nothing large is committed.
+DeOldify colorization is excluded from the hosted image (it needs PyTorch and ~870 MB of weights);
+`/methods` and `/health` report which models are actually available.
+
+1. Create a Space at https://huggingface.co/new-space, SDK **Docker**, hardware **CPU basic** (free: 2 vCPU, 16 GB RAM).
+2. Push this repository to the Space's git remote (the README front matter configures `app_port: 7860`).
+3. In the Space settings add the variable `ALLOWED_ORIGINS=https://mmeraj1.github.io`.
+4. Set the portfolio's GitHub Actions variable `VITE_ENHANCE_API_URL` to `https://<user>-<space>.hf.space` and re-run the deploy workflow.

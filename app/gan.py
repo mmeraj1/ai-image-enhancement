@@ -86,6 +86,18 @@ def _load_deoldify_colorizer() -> Any:
         return _colorizer
 
 
+def gan_availability() -> dict[str, bool]:
+    from importlib.util import find_spec
+
+    cache = _cache_dir()
+    return {
+        "deblur": (cache / "deblurgan_generator.keras").is_file() and find_spec("tensorflow") is not None,
+        "colorize": (cache / "models" / "ColorizeStable_gen.pth").is_file()
+        and (cache / "DeOldify" / "deoldify").is_dir()
+        and find_spec("torch") is not None,
+    }
+
+
 def _tile_starts(length: int) -> list[int]:
     if length <= TILE_SIZE:
         return [0]
@@ -155,3 +167,14 @@ def colorize(image_bgr: np.ndarray) -> np.ndarray:
             post_process=True,
         )
     return cv2.cvtColor(np.asarray(result.convert("RGB")), cv2.COLOR_RGB2BGR)
+
+
+def preload() -> None:
+    """Load the DeblurGAN weights in the background so the first request is not slow."""
+    def _load() -> None:
+        try:
+            _load_deblurgan_model()
+        except ModelSetupError:
+            pass
+
+    threading.Thread(target=_load, daemon=True).start()

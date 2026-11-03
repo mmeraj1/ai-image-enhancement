@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
 import os
 import subprocess
@@ -85,9 +86,17 @@ def setup_deoldify_source() -> None:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Download GAN weights.")
+    parser.add_argument("--only", choices=("deblur", "colorize"), help="Download a single model (default: all).")
+    args = parser.parse_args()
     for url, destination, expected_sha256 in ASSETS:
+        if args.only == "deblur" and "deblurgan" not in destination.name:
+            continue
+        if args.only == "colorize" and "deblurgan" in destination.name:
+            continue
         download_asset(url, destination, expected_sha256)
-    setup_deoldify_source()
+    if args.only != "deblur":
+        setup_deoldify_source()
     print(f"GAN models are ready in {MODEL_CACHE}")
 
 
